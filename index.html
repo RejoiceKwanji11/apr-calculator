@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GRM SEARCH — APR Calculator</title>
+<meta name="theme-color" content="#1a2b4a">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="APR Calculator">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f5f7f6;color:#333;font-size:13px}
+button{font-family:inherit;cursor:pointer}input,select{font-family:inherit}
+.hdr{background:linear-gradient(135deg,#1B4D3E 0%,#25654f 100%);padding:12px 24px;color:#fff;display:flex;align-items:center;gap:14px}
+.hdr h1{margin:0;font-size:17px;font-weight:700;letter-spacing:.5px}
+.hdr p{margin:2px 0 0;font-size:11px;opacity:.75}
+.btn{padding:5px 12px;background:#1B4D3E;color:#fff;border:none;border-radius:5px;font-weight:600;font-size:11px}
+.btn:hover{opacity:.9}.btn:disabled{opacity:.4;cursor:default}
+.btn-sm{padding:4px 10px;font-size:11px;border-radius:4px}
+.btn-blue{background:#1565c0}.btn-purple{background:#6a1b9a}.btn-grey{background:#455a64}
+.btn-ghost{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:6px}
+.tabs{display:flex;border-bottom:2px solid #e2e6ec;background:#fff;padding:0 20px;align-items:center;flex-wrap:wrap}
+.tab{padding:10px 20px;border:none;background:none;font-size:13px;font-weight:400;color:#666;border-bottom:3px solid transparent}
+.tab.active{font-weight:700;color:#1B4D3E;border-bottom-color:#1B4D3E}
+.card{background:#fff;border-radius:8px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:16px}
+.badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;display:inline-block}
+.badge-amber{background:#f39c12;color:#fff}.badge-green{background:#27ae60;color:#fff}
+table{border-collapse:collapse;width:100%;font-size:12px}
+.tbl-hdr th{background:#1B4D3E;color:#fff;border-bottom:2px solid #143b2f;cursor:pointer;text-align:left;padding:7px 5px;font-size:11px;white-space:nowrap}
+.tbl-bench th{background:#f5f7f6;border-bottom:1px solid #ddd;text-align:left;padding:5px 6px;font-size:11px;font-weight:600}
+td{padding:3px 4px;border-bottom:1px solid #eee}
+.inp{width:100%;padding:4px 5px;border:1px solid #cdd3dc;border-radius:4px;font-size:12px;box-sizing:border-box}
+.inp-num{width:90px;padding:4px 5px;border:1px solid #cdd3dc;border-radius:4px;font-size:12px;text-align:right}
+.inp-sm{width:55px}
+.sel{padding:4px 5px;border:1px solid #cdd3dc;border-radius:4px;font-size:12px;background:#fff}
+.del-btn{background:none;border:none;color:#c0392b;font-size:15px;font-weight:700;padding:2px 5px}
+.warn{color:#e65100;cursor:help}
+.section{margin-bottom:20px;border:1px solid #e2e6ec;border-radius:8px;overflow:hidden}
+.section-hdr{background:#1B4D3E;color:#fff;padding:7px 12px;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:space-between}
+.collapse-btn{width:100%;padding:10px 16px;background:#fff;border:1px solid #e2e6ec;border-radius:8px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#1B4D3E;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.collapse-btn.open{border-radius:8px 8px 0 0}
+.collapse-body{background:#fff;border:1px solid #e2e6ec;border-top:none;border-radius:0 0 8px 8px;padding:16px}
+.band{color:#fff;border-radius:4px;padding:2px 8px;font-weight:700;display:inline-block;font-size:10px}
+.role-cards{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;max-width:960px;margin:0 auto}
+.role-card{width:280px;min-height:240px;padding:32px 24px 24px;background:#fff;border:2px solid #e2e6ec;border-radius:12px;text-align:left;display:flex;flex-direction:column;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:border-color .15s,box-shadow .15s}
+.role-card:hover{border-color:#1B4D3E;box-shadow:0 4px 16px rgba(27,77,62,.18)}
+.tag{display:inline-flex;align-items:center;gap:4px;background:#e8f5e9;color:#1B4D3E;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:500;margin:2px 3px}
+.overflow-x{overflow-x:auto}
+.msg{margin:10px 20px 0;padding:8px 14px;border-radius:6px;font-size:12px}
+.msg-ok{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7}
+.msg-err{background:#fff3e0;color:#e65100;border:1px solid #ffcc80}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+"use strict";
+/* GRM SEARCH — APR Calculator (Standalone HTML, localStorage) */
+
+// ── Constants ───────────────────────────────────────────────────
+const ROLES=[''+'Litigator','Transactional','In-house'];
+const PRACTICE_AREAS=['Commercial Litigation','Employment Dispute','Regulatory Investigation','Appeal','Contract Dispute','Class Action','Injunction / Interim Relief','Arbitration','M&A','Capital Markets','Real Estate','IP / Technology','Corporate Advisory','Compliance','Insurance','Tax'];
+const COMPLEXITY_BANDS=['Low','Medium','High'];
+const MATTER_STATUSES=['Open','Closed'];
+const ERROR_SEVERITIES=['Minor','Significant','Critical'];
+const YES_NO=['Yes','No'];
+const YES_NO_PARTIAL=['Yes','No','Partial'];
+const SENIORITY_LEVELS=['Junior','Mid-level','Senior','Partner'];
+const APR_BANDS=[{l:'Elite',m:120},{l:'Strong',m:100},{l:'Good',m:85},{l:'Fair',m:70},{l:'Weak',m:50},{l:'Poor',m:0}];
+const BAND_COL={Elite:'#1a237e',Strong:'#27ae60',Good:'#2196f3',Fair:'#f39c12',Weak:'#e67e22',Poor:'#c0392b','Insufficient data':'#7f8c8d','Insufficient Data':'#7f8c8d'};
+const ALL='All',MIN_AUTO=5;
+const BT=[
+  {key:'peerMedianDays',label:'Peer Median Days (CTE)',desc:'PA+CB+Jur',sJ:1,sP:1,sC:1,roles:['Litigator'],unit:'days'},
+  {key:'peerMedianCycle',label:'Peer Median Cycle (TE)',desc:'PA+CB',sJ:0,sP:1,sC:1,roles:['Transactional'],unit:'days'},
+  {key:'peerMedianDealValue',label:'Peer Median Deal Value (CADV)',desc:'PA+CB',sJ:0,sP:1,sC:1,roles:['Transactional'],unit:'R'},
+  {key:'targetCycleDays',label:'Target Cycle Days (MCE)',desc:'PA',sJ:0,sP:1,sC:0,roles:['In-house'],unit:'days'},
+  {key:'normalisationSchedule',label:'Normalisation Schedule (CADV)',desc:'CB+Jur',sJ:1,sP:0,sC:1,roles:['Transactional'],unit:'R'},
+];
+
+// ── State ───────────────────────────────────────────────────────
+let S={
+  role:null,tab:'Matters',benchOpen:false,msg:null,
+  mm:{Litigator:[],Transactional:[],'In-house':[]},
+  bm:{peerMedianDays:[],peerMedianCycle:[],peerMedianDealValue:[],targetCycleDays:[],normalisationSchedule:[]},
+  sl:{practiceAreas:[...PRACTICE_AREAS],complexityBands:[...COMPLEXITY_BANDS],jurisdictions:['Gauteng','Western Cape','KwaZulu-Natal','Eastern Cape','Free State','Limpopo','Mpumalanga','North West','Northern Cape']},
+};
+let _id=0;const mkId=()=>`id-${++_id}-${Date.now()}`;
+
+// ── Storage ─────────────────────────────────────────────────────
+function save(){try{for(const r of ROLES)localStorage.setItem('grm-m-'+r,JSON.stringify(S.mm[r]));localStorage.setItem('grm-bm',JSON.stringify(S.bm));localStorage.setItem('grm-sl',JSON.stringify(S.sl))}catch(e){}}
+function load(){try{for(const r of ROLES){const d=localStorage.getItem('grm-m-'+r);if(d)S.mm[r]=JSON.parse(d)}const b=localStorage.getItem('grm-bm');if(b)S.bm=JSON.parse(b);const l=localStorage.getItem('grm-sl');if(l)S.sl=JSON.parse(l)}catch(e){}}
+
+// ── Helpers ─────────────────────────────────────────────────────
+function h(t,a,...c){const e=document.createElement(t);if(a)for(const[k,v]of Object.entries(a)){if(k==='style'&&typeof v==='object')Object.assign(e.style,v);else if(k.startsWith('on')&&typeof v==='function')e.addEventListener(k.slice(2).toLowerCase(),v);else if(k==='className')e.className=v;else if(k==='value')e.value=v??'';else if(k==='disabled'){if(v)e.setAttribute('disabled','');} else e.setAttribute(k,v)}for(const x of c.flat())if(x!=null)e.append(typeof x==='string'||typeof x==='number'?document.createTextNode(String(x)):x);return e}
+const esc=v=>{const s=String(v??'');return s.includes(',')||s.includes('"')||s.includes('\n')?`"${s.replace(/"/g,'""')}"`:s};
+function calcDur(o,c){if(!o||!c)return 0;const d=(new Date(c)-new Date(o))/864e5;return d>0?Math.round(d):0}
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+function med(a){if(!a.length)return 0;const s=[...a].sort((x,y)=>x-y),m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2}
+function getBand(apr){for(const b of APR_BANDS)if(apr>=b.m)return b.l;return'Poor'}
+function dlCSV(name,csv){const b=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();URL.revokeObjectURL(a.href)}
+function parseLine(line){const f=[];let c='',q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(q){if(ch==='"'&&line[i+1]==='"'){c+='"';i++}else if(ch==='"')q=false;else c+=ch}else{if(ch==='"')q=true;else if(ch===','){f.push(c.trim());c=''}else c+=ch}}f.push(c.trim());return f}
+
+// ── Benchmark Lookup ────────────────────────────────────────────
+function lookupBM(entries,pa,cb,jur){
+  const ex=entries.find(e=>e.Practice_Area===pa&&(!cb||e.Complexity_Band===cb)&&(!jur||e.Jurisdiction===jur));
+  if(ex&&ex.Value!=null)return ex.Value;
+  const cands=entries.filter(e=>{const pO=e.Practice_Area===pa||e.Practice_Area===ALL||(!pa&&!e.Practice_Area);const cO=!cb||e.Complexity_Band===cb||e.Complexity_Band===ALL||!e.Complexity_Band;const jO=!jur||e.Jurisdiction===jur||e.Jurisdiction===ALL||!e.Jurisdiction;return pO&&cO&&jO});
+  const sc=e=>{let s=0;if(e.Practice_Area===pa)s+=4;else if(e.Practice_Area===ALL)s+=1;if(e.Complexity_Band===cb)s+=4;else if(e.Complexity_Band===ALL)s+=1;if(jur&&e.Jurisdiction===jur)s+=4;else if(e.Jurisdiction===ALL)s+=1;return s};
+  cands.sort((a,b)=>sc(b)-sc(a));const best=cands.find(c=>c.Value!=null);return best?best.Value:null;
+}
+function calcNDV(dv,cb,jur){const f=lookupBM(S.bm.normalisationSchedule,'',cb,jur);return(!f||f===0)?dv:dv*f}
+
+// ── Missing Benchmark Check ─────────────────────────────────────
+function missBM(m,role){
+  const pa=m.Practice_Area,cb=m.Complexity_Band,jur=m.Jurisdiction;if(!pa&&!cb&&!jur)return[];
+  const miss=[],A=ALL;
+  const has=(ent,cP,cC,cJ)=>ent.some(e=>(!cP||e.Practice_Area===pa||e.Practice_Area===A)&&(!cC||e.Complexity_Band===cb||e.Complexity_Band===A)&&(!cJ||e.Jurisdiction===jur||e.Jurisdiction===A));
+  if(role==='Litigator'){if(pa&&cb&&jur&&!has(S.bm.peerMedianDays,1,1,1))miss.push(`No Peer Median Days for ${pa}/${cb}/${jur}`)}
+  else if(role==='Transactional'){if(pa&&cb&&!has(S.bm.peerMedianCycle,1,1,0))miss.push(`No Peer Median Cycle for ${pa}/${cb}`);if(pa&&cb&&!has(S.bm.peerMedianDealValue,1,1,0))miss.push(`No Peer Median Deal Value for ${pa}/${cb}`);if(cb&&jur&&!has(S.bm.normalisationSchedule,0,1,1))miss.push(`No Normalisation for ${cb}/${jur}`)}
+  else{if(pa&&!has(S.bm.targetCycleDays,1,0,0))miss.push(`No Target Cycle Days for ${pa}`)}
+  return miss;
+}
+function totalNV(role){return BT.filter(t=>t.roles.includes(role)).reduce((s,t)=>s+S.bm[t.key].filter(e=>e.Value==null).length,0)}
+
+// ── Scorecard Engine ────────────────────────────────────────────
+function computeScorecard(allM,role){
+  const end=new Date(),start=new Date(end);start.setFullYear(start.getFullYear()-1);
+  const fmt=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  const rpL=`${fmt(start)} to ${fmt(end)}`;
+  const rM=allM.filter(m=>m.role===role);
+  const isQ=m=>{if(m.Matter_Status!=='Closed'||!m.Close_Date||!m.Attorney_Name.trim())return false;const c=new Date(m.Close_Date);return c>=start&&c<=end};
+  const hasF=m=>{if(!m.Matter_ID||!m.Attorney_Name.trim()||!m.Practice_Area||!m.Complexity_Band||!m.Jurisdiction||!m.Seniority||!m.Open_Date||!m.Close_Date)return false;if(m.role==='Litigator'&&(!m.Expected_Outcome_Value||!m.Actual_Outcome_Value||!m.Budgeted_Net_Value||!m.Actual_Spend))return false;if(m.role==='Transactional'&&(!m.Lead_Attorney||!m.Completed_Without_Rework||!m.Deal_Value))return false;if(m.role==='In-house'&&(!m.Business_Objective||!m.Business_Objective_Met||!m.Resolved_Inhouse))return false;return true};
+  const qual=rM.filter(m=>isQ(m)&&hasF(m));
+  const grp={},aBA={};
+  for(const m of qual){const n=m.Attorney_Name.trim();(grp[n]??=[]).push(m)}
+  for(const m of rM.filter(isQ)){const n=m.Attorney_Name.trim();(aBA[n]??=[]).push(m)}
+  const aD=qual.map(m=>m.Duration_Days).filter(d=>d>0),pMD=med(aD);
+  const minT=role==='In-house'?20:10,now=new Date().toISOString();
+  const cntErr=ms=>ms.reduce((s,m)=>m.Error_Disputed==='Yes'?s:s+m.Errors_Count,0);
+  const scores=Object.entries(grp).map(([name,ms])=>{
+    const n=ms.length,aA=aBA[name]||ms,mP=aA.length?(aA.length-n)/aA.length:0;
+    const err=cntErr(ms),w=[];let K1=0,K2=0,K3=0,K4=0,l1='',l2='',l3='',l4='';
+    if(role==='Litigator'){l1='LOI';l2='CTE';l3='BPI';l4='PER';const sA=ms.reduce((s,m)=>s+m.Actual_Outcome_Value,0),sE=ms.reduce((s,m)=>s+m.Expected_Outcome_Value,0);K1=sE?sA/sE:0;const avg=n?ms.reduce((s,m)=>s+m.Duration_Days,0)/n:0;let bS=0,bC=0;for(const m of ms){const bv=lookupBM(S.bm.peerMedianDays,m.Practice_Area,m.Complexity_Band,m.Jurisdiction);if(bv!=null){bS+=bv;bC++}else w.push(`Missing peer median days for ${m.Practice_Area}/${m.Complexity_Band}/${m.Jurisdiction}`)}const aB=bC?bS/bC:pMD;if(!bC&&pMD)w.push('No benchmark for CTE — using peer median');K2=avg>0?aB/avg:0;const sB=ms.reduce((s,m)=>s+m.Budgeted_Net_Value,0),sS=ms.reduce((s,m)=>s+m.Actual_Spend,0);K3=sS?sB/sS:0;K4=n?err/n:0}
+    else if(role==='Transactional'){l1='CQR';l2='TE';l3='CADV';l4='DER';const led=ms.filter(m=>m.Lead_Attorney==='Yes'),nR=led.filter(m=>m.Completed_Without_Rework==='Yes').length;K1=led.length?nR/led.length:0;const avg=n?ms.reduce((s,m)=>s+m.Duration_Days,0)/n:0;let bS=0,bC=0;for(const m of ms){const bv=lookupBM(S.bm.peerMedianCycle,m.Practice_Area,m.Complexity_Band);if(bv!=null){bS+=bv;bC++}else w.push(`Missing peer median cycle for ${m.Practice_Area}/${m.Complexity_Band}`)}const aB=bC?bS/bC:pMD;if(!bC&&pMD)w.push('No benchmark for TE — using peer median');K2=avg>0?aB/avg:0;const nv=ms.map(m=>calcNDV(m.Deal_Value,m.Complexity_Band,m.Jurisdiction)).filter(v=>v>0),aN=nv.length?nv.reduce((a,b)=>a+b,0)/nv.length:0;let dS=0,dC=0;for(const m of ms){const bv=lookupBM(S.bm.peerMedianDealValue,m.Practice_Area,m.Complexity_Band);if(bv!=null){dS+=bv;dC++}else w.push(`Missing peer median deal value for ${m.Practice_Area}/${m.Complexity_Band}`)}const aD2=dC?dS/dC:0;K3=aD2?aN/aD2:0;K4=n?err/n:0}
+    else{l1='BER';l2='MCE';l3='SLI';l4='PRER';K1=n?ms.filter(m=>m.Business_Objective_Met==='Yes').length/n:0;const avg=n?ms.reduce((s,m)=>s+m.Duration_Days,0)/n:0;let bS=0,bC=0;for(const m of ms){const bv=lookupBM(S.bm.targetCycleDays,m.Practice_Area,'','');if(bv!=null){bS+=bv;bC++}else w.push(`Missing target cycle for ${m.Practice_Area}`)}const aB=bC?bS/bC:pMD;if(!bC&&pMD)w.push('No benchmark for MCE — using peer median');K2=avg>0?aB/avg:0;K3=n?ms.filter(m=>m.Resolved_Inhouse==='Yes').length/n:0;if(!w.includes('SLI placeholder — to be confirmed'))w.push('SLI placeholder — to be confirmed');K4=n?err/n:0}
+    const a=clamp((K1-.7)*3.5,0,2.375),b=clamp((K2-.6)*2.7,0,2.375),c=clamp((K3-.5)*2.5,0,2.375),d=clamp(2.375-K4*12,0,2.375);
+    const APR=Math.round((a+b+c+d)/6*1000)/10;
+    const lC=role==='Transactional'?ms.filter(m=>m.Lead_Attorney==='Yes').length:n;
+    const mT=lC>=minT,dQ=mP>.2;
+    let band,mS,dF;
+    if(!mT){band='Insufficient data';mS='No';dF=`Below minimum (${lC}/${minT})`}else if(dQ){band='Insufficient Data';mS='Yes';dF=`>${Math.round(mP*100)}% missing fields`}else{band=getBand(APR);mS='Yes';dF=''}
+    return{Attorney_Name:name,Role:role,Matter_Count:n,KPI1:K1,KPI2:K2,KPI3:K3,KPI4:K4,KPI1_Label:l1,KPI2_Label:l2,KPI3_Label:l3,KPI4_Label:l4,a,b,c,d,APR,Band:band,Percentile:null,Meets_Threshold:mS,Data_Quality_Flag:dF,Review_Period:rpL,Peer_Group:`${role} attorneys`,Last_Calculated:now,Benchmark_Warnings:[...new Set(w)]};
+  });
+  const scored=scores.filter(s=>s.Meets_Threshold==='Yes');
+  if(scored.length){const sorted=[...scored].sort((a,b)=>a.APR-b.APR);for(const s of scored)s.Percentile=Math.round(sorted.filter(x=>x.APR<s.APR).length/scored.length*1000)/1000}
+  return scores.sort((a,b)=>b.APR-a.APR);
+}
+
+// ── CSV Import (Matters) ────────────────────────────────────────
+function importMattersCSV(text,role){
+  text=text.replace(/^\uFEFF/,'');
+  const lines=text.split(/\r?\n/).filter(l=>l.trim()&&!l.trim().startsWith('#')&&!l.trim().startsWith('"#'));
+  if(lines.length<2)return{matters:[],errors:['Empty']};
+  const hdrs=parseLine(lines[0]).map(h=>h.trim()),matters=[];
+  for(let i=1;i<lines.length;i++){
+    const vals=parseLine(lines[i]);if(vals.every(v=>!v.trim()))continue;
+    const r={};hdrs.forEach((h,idx)=>r[h]=vals[idx]??'');
+    const base={id:mkId(),role,Matter_ID:r.Matter_ID||'',Attorney_Name:r.Attorney_Name||'',Practice_Area:r.Practice_Area||'',Complexity_Band:r.Complexity_Band||'',Jurisdiction:r.Jurisdiction||'',Seniority:SENIORITY_LEVELS.includes(r.Seniority)?r.Seniority:'Junior',Open_Date:r.Open_Date||'',Close_Date:r.Close_Date||'',Duration_Days:calcDur(r.Open_Date,r.Close_Date),Matter_Status:MATTER_STATUSES.includes(r.Matter_Status)?r.Matter_Status:'Open',Errors_Count:parseInt(r.Errors_Count)||0,Error_Type:r.Error_Type||'',Error_Severity:ERROR_SEVERITIES.includes(r.Error_Severity)?r.Error_Severity:'',Error_Disputed:YES_NO.includes(r.Error_Disputed)?r.Error_Disputed:''};
+    let m;
+    if(role==='Litigator')m={...base,Expected_Outcome_Value:parseFloat(r.Expected_Outcome_Value)||0,Actual_Outcome_Value:parseFloat(r.Actual_Outcome_Value)||0,Budgeted_Net_Value:parseFloat(r.Budgeted_Net_Value)||0,Actual_Spend:parseFloat(r.Actual_Spend)||0};
+    else if(role==='Transactional'){m={...base,Lead_Attorney:YES_NO.includes(r.Lead_Attorney)?r.Lead_Attorney:'No',Completed_Without_Rework:YES_NO.includes(r.Completed_Without_Rework)?r.Completed_Without_Rework:'No',Deal_Value:parseFloat(r.Deal_Value)||0,Normalised_Deal_Value:0};m.Normalised_Deal_Value=calcNDV(m.Deal_Value,m.Complexity_Band,m.Jurisdiction)}
+    else m={...base,Business_Objective:r.Business_Objective||'',Business_Objective_Met:YES_NO_PARTIAL.includes(r.Business_Objective_Met)?r.Business_Objective_Met:'No',Resolved_Inhouse:YES_NO.includes(r.Resolved_Inhouse)?r.Resolved_Inhouse:'No'};
+    matters.push(m);
+  }
+  return{matters,errors:[]};
+}
+
+// ── CSV Export (Matters) ────────────────────────────────────────
+function exportMatters(matters,role){
+  const common=['Matter_ID','Attorney_Name','Practice_Area','Complexity_Band','Jurisdiction','Seniority','Open_Date','Close_Date','Duration_Days','Matter_Status','Errors_Count','Error_Type','Error_Severity','Error_Disputed'];
+  const extra=role==='Litigator'?['Expected_Outcome_Value','Actual_Outcome_Value','Budgeted_Net_Value','Actual_Spend']:role==='Transactional'?['Lead_Attorney','Completed_Without_Rework','Deal_Value','Normalised_Deal_Value']:['Business_Objective','Business_Objective_Met','Resolved_Inhouse'];
+  const hdrs=[...common,...extra];
+  dlCSV(`${role}_matters.csv`,[hdrs.join(','),...matters.map(m=>hdrs.map(h=>esc(m[h]??'')).join(','))].join('\n'));
+}
+function exportScorecard(scores){
+  const hdrs=['Attorney_Name','Role','Matter_Count','KPI1_Label','KPI1','KPI2_Label','KPI2','KPI3_Label','KPI3','KPI4_Label','KPI4','a','b','c','d','APR','Band','Percentile','Meets_Threshold','Data_Quality_Flag','Review_Period','Peer_Group'];
+  dlCSV('scorecard.csv',[hdrs.join(','),...scores.map(s=>hdrs.map(h=>esc(s[h]??'')).join(','))].join('\n'));
+}
+
+// ── Benchmark CSV Import/Export ─────────────────────────────────
+function exportBenchCSV(t){
+  const entries=S.bm[t.key];
+  const hdrs=['Practice_Area','Complexity_Band','Jurisdiction','Value'];
+  const rows=entries.map(e=>[esc(e.Practice_Area),esc(e.Complexity_Band),esc(e.Jurisdiction),esc(e.Value??'')].join(','));
+  dlCSV(`${t.key}_benchmarks.csv`,[hdrs.join(','),...rows].join('\n'));
+}
+function importBenchCSV(text,t){
+  text=text.replace(/^\uFEFF/,'');
+  const lines=text.split(/\r?\n/).filter(l=>l.trim()&&!l.trim().startsWith('#')&&!l.trim().startsWith('"#'));
+  if(lines.length<2)return{added:0,upserted:0};
+  const hdrs=parseLine(lines[0]).map(h=>h.trim());
+  const pI=hdrs.indexOf('Practice_Area'),cI=hdrs.indexOf('Complexity_Band'),jI=hdrs.indexOf('Jurisdiction'),vI=hdrs.indexOf('Value');
+  const existing=S.bm[t.key];let added=0,upserted=0;
+  for(let i=1;i<lines.length;i++){
+    const vals=parseLine(lines[i]);if(vals.every(v=>!v.trim()))continue;
+    const pa=(pI>=0?vals[pI]:'')?.trim()??'',cb=(cI>=0?vals[cI]:'')?.trim()??'',jur=(jI>=0?vals[jI]:'')?.trim()??'';
+    const raw=vI>=0?vals[vI]?.trim():'',num=raw?parseFloat(raw):null,value=num!=null&&!isNaN(num)?num:null;
+    const match=existing.find(e=>(!t.sP||e.Practice_Area===pa)&&(!t.sC||e.Complexity_Band===cb)&&(!t.sJ||e.Jurisdiction===jur));
+    if(match){if(value!=null){match.Value=value;upserted++}}
+    else{existing.push({id:mkId(),Practice_Area:pa,Complexity_Band:cb,Jurisdiction:jur,Value:value});added++}
+  }
+  return{added,upserted};
+}
+
+// ── Template Download (CSV) ─────────────────────────────────────
+function downloadTemplate(role){
+  const common=['Matter_ID','Attorney_Name','Practice_Area','Complexity_Band','Jurisdiction','Seniority','Open_Date','Close_Date','Duration_Days','Matter_Status','Errors_Count','Error_Type','Error_Severity','Error_Disputed'];
+  const extra=role==='Litigator'?['Expected_Outcome_Value','Actual_Outcome_Value','Budgeted_Net_Value','Actual_Spend']:role==='Transactional'?['Lead_Attorney','Completed_Without_Rework','Deal_Value','Normalised_Deal_Value']:['Business_Objective','Business_Objective_Met','Resolved_Inhouse'];
+  const hdrs=[...common,...extra];
+  const instr={Matter_ID:'# Unique ID',Attorney_Name:'# Full name',Practice_Area:`# ${PRACTICE_AREAS.join(' | ')}`,Complexity_Band:`# ${COMPLEXITY_BANDS.join(' | ')}`,Jurisdiction:'# e.g. Gauteng',Seniority:`# ${SENIORITY_LEVELS.join(' | ')}`,Open_Date:'# YYYY-MM-DD',Close_Date:'# YYYY-MM-DD',Duration_Days:'# Auto-calculated',Matter_Status:`# ${MATTER_STATUSES.join(' | ')}`,Errors_Count:'# 0+',Error_Type:'# Text',Error_Severity:`# ${ERROR_SEVERITIES.join(' | ')}`,Error_Disputed:`# ${YES_NO.join(' | ')}`,Expected_Outcome_Value:'# Rand',Actual_Outcome_Value:'# Rand',Budgeted_Net_Value:'# Rand',Actual_Spend:'# Rand',Lead_Attorney:`# ${YES_NO.join(' | ')}`,Completed_Without_Rework:`# ${YES_NO.join(' | ')}`,Deal_Value:'# Rand',Normalised_Deal_Value:'# Auto',Business_Objective:'# Text',Business_Objective_Met:`# ${YES_NO_PARTIAL.join(' | ')}`,Resolved_Inhouse:`# ${YES_NO.join(' | ')}`};
+  const instrRow=hdrs.map(h=>esc(instr[h]||'')).join(',');
+  dlCSV(`${role}_Template.csv`,[hdrs.join(','),instrRow].join('\n'));
+}
+
+// ── Auto-value for benchmark gen ────────────────────────────────
+function autoVal(t,pa,cb,jur,rM){
+  if(t.key==='normalisationSchedule')return null;
+  const match=rM.filter(m=>{if(t.sP&&m.Practice_Area!==pa)return false;if(t.sC&&m.Complexity_Band!==cb)return false;if(t.sJ&&m.Jurisdiction!==jur)return false;return true});
+  if(match.length<MIN_AUTO)return null;
+  if(t.key==='peerMedianDealValue'){const v=match.map(m=>m.Deal_Value).filter(v=>v>0);return v.length>=MIN_AUTO?Math.round(med(v)*100)/100:null}
+  const d=match.map(m=>m.Duration_Days).filter(d=>d>0);return d.length>=MIN_AUTO?Math.round(med(d)*100)/100:null;
+}
+function genMissing(t){
+  const rM=S.mm[S.role],existing=S.bm[t.key],seen=new Set();
+  for(const m of rM){
+    const pa=t.sP?m.Practice_Area:'',cb=t.sC?m.Complexity_Band:'',jur=t.sJ?m.Jurisdiction:'';
+    if(t.sP&&!pa||t.sC&&!cb||t.sJ&&!jur)continue;
+    const k=`${pa}|${cb}|${jur}`;if(seen.has(k))continue;seen.add(k);
+    if(existing.some(e=>(!t.sP||e.Practice_Area===pa)&&(!t.sC||e.Complexity_Band===cb)&&(!t.sJ||e.Jurisdiction===jur)))continue;
+    existing.push({id:mkId(),Practice_Area:pa,Complexity_Band:cb,Jurisdiction:jur,Value:autoVal(t,pa,cb,jur,rM)});
+  }
+}
+
+// ── New matter factory ──────────────────────────────────────────
+function newMatter(role){
+  const base={id:mkId(),role,Matter_ID:'',Attorney_Name:'',Practice_Area:'',Complexity_Band:'',Jurisdiction:'',Seniority:'Junior',Open_Date:'',Close_Date:'',Duration_Days:0,Matter_Status:'Open',Errors_Count:0,Error_Type:'',Error_Severity:'',Error_Disputed:''};
+  if(role==='Litigator')return{...base,Expected_Outcome_Value:0,Actual_Outcome_Value:0,Budgeted_Net_Value:0,Actual_Spend:0};
+  if(role==='Transactional')return{...base,Lead_Attorney:'No',Completed_Without_Rework:'No',Deal_Value:0,Normalised_Deal_Value:0};
+  return{...base,Business_Objective:'',Business_Objective_Met:'No',Resolved_Inhouse:'No'};
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════════════════════════
+function R(){const app=document.getElementById('app');app.innerHTML='';if(!S.role){renderRoleSel(app);return}app.append(renderHdr(),renderTabs(),renderContent());save()}
+
+function renderRoleSel(app){
+  const cards=[{role:'Litigator',icon:'⚖️',desc:'Closed-matter analytics for litigation attorneys. Tracks LOI, CTE, BPI and PER.',min:10},{role:'Transactional',icon:'📑',desc:'Deal-based scoring for transactional attorneys. Measures CQR, TE, CADV and DER.',min:10},{role:'In-house',icon:'🏢',desc:'In-house counsel evaluation. Scores BER, MCE, SLI and PRER.',min:20}];
+  app.append(
+    h('div',{className:'hdr',style:{textAlign:'center',justifyContent:'center',flexDirection:'column'}},h('h1',null,'GRM SEARCH — APR Calculator'),h('p',null,'Closed-matter analytics & attorney scoring')),
+    h('div',{style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',padding:'40px 24px'}},
+      h('div',{className:'role-cards'},...cards.map(c=>{
+        const cnt=S.mm[c.role].length;
+        return h('button',{className:'role-card',onClick:()=>{S.role=c.role;S.tab='Matters';R()}},
+          h('div',{style:{fontSize:'36px'}},c.icon),h('div',{style:{fontSize:'18px',fontWeight:700,color:'#1B4D3E'}},c.role),
+          h('div',{style:{fontSize:'13px',color:'#555',lineHeight:'1.5',flex:1}},c.desc),
+          h('div',{style:{display:'flex',justifyContent:'space-between',borderTop:'1px solid #eee',paddingTop:'12px',marginTop:'4px'}},
+            h('span',{style:{fontSize:'11px',color:'#888'}},`Min. ${c.min} matters`),
+            cnt?h('span',{style:{fontSize:'11px',color:'#1B4D3E',fontWeight:600,background:'#e8f5e9',padding:'2px 8px',borderRadius:'10px'}},`${cnt} saved`):null))}))))
+}
+
+function renderHdr(){
+  return h('div',{className:'hdr'},h('div',{style:{flex:1}},h('h1',null,`GRM SEARCH — ${S.role} APR Calculator`),h('p',null,'Closed-matter analytics & attorney scoring')),
+    h('button',{className:'btn btn-ghost',onClick:()=>{S.role=null;S.tab='Matters';S.benchOpen=false;S.msg=null;R()}},'← Switch Role'))
+}
+
+function renderTabs(){
+  const matters=S.mm[S.role]||[],scores=computeScorecard(matters,S.role);
+  const bar=h('div',{className:'tabs'});
+  for(const t of['Matters','Scorecard','Settings'])bar.append(h('button',{className:'tab'+(S.tab===t?' active':''),onClick:()=>{S.tab=t;S.msg=null;R()}},t));
+  bar.append(h('div',{style:{flex:1}}),h('span',{style:{fontSize:'11px',color:'#888',marginRight:'10px'}},`${matters.length} matter${matters.length!==1?'s':''} · ${scores.length} attorney${scores.length!==1?'s':''}`));
+  if(S.tab==='Matters'){
+    const fi=h('input',{type:'file',accept:'.csv',style:{display:'none'},onChange:ev=>{const f=ev.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=e=>{const{matters:imp}=importMattersCSV(e.target.result,S.role);S.mm[S.role]=[...S.mm[S.role],...imp];S.msg=imp.length?{t:'ok',x:`Imported ${imp.length} matter${imp.length!==1?'s':''}.`}:{t:'err',x:'No valid matters found.'};R()};reader.readAsText(f);ev.target.value=''}});
+    bar.append(h('div',{style:{display:'flex',gap:'5px'}},fi,
+      h('button',{className:'btn btn-sm btn-purple',onClick:()=>downloadTemplate(S.role)},'📋 Template'),
+      h('button',{className:'btn btn-sm',onClick:()=>fi.click()},'⬆ Import'),
+      h('button',{className:'btn btn-sm',onClick:()=>exportMatters(matters,S.role),disabled:!matters.length},'⬇ Export')));
+  }
+  return bar;
+}
+
+function renderContent(){
+  const wrap=h('div',{style:{padding:'20px'}});
+  if(S.msg){const m=S.msg;wrap.append(h('div',{className:'msg '+(m.t==='ok'?'msg-ok':'msg-err'),style:{marginBottom:'10px'}},m.x))}
+  if(S.tab==='Matters')wrap.append(renderMatterEntry(),renderBenchPanel());
+  else if(S.tab==='Scorecard')wrap.append(renderScorecard());
+  else wrap.append(renderSettings());
+  return wrap;
+}
+
+// ── Matter Entry ────────────────────────────────────────────────
+function renderMatterEntry(){
+  const role=S.role,matters=S.mm[role],sl=S.sl;
+  const card=h('div',{className:'card'});
+  const common=[{k:'Matter_ID',l:'Matter ID',t:'text'},{k:'Attorney_Name',l:'Attorney',t:'text'},{k:'Practice_Area',l:'Practice Area',t:'select',o:sl.practiceAreas},{k:'Complexity_Band',l:'Complexity',t:'select',o:sl.complexityBands},{k:'Jurisdiction',l:'Jurisdiction',t:'select',o:sl.jurisdictions},{k:'Seniority',l:'Seniority',t:'select',o:[...SENIORITY_LEVELS]},{k:'Open_Date',l:'Open',t:'date'},{k:'Close_Date',l:'Close',t:'date'},{k:'Duration_Days',l:'Days',t:'ro'},{k:'Matter_Status',l:'Status',t:'select',o:[...MATTER_STATUSES]},{k:'Errors_Count',l:'Err',t:'int'},{k:'Error_Type',l:'Err Type',t:'text',c:'Errors_Count'},{k:'Error_Severity',l:'Severity',t:'select',o:[...ERROR_SEVERITIES],c:'Errors_Count'},{k:'Error_Disputed',l:'Disputed',t:'yesno',c:'Errors_Count'}];
+  const extra=role==='Litigator'?[{k:'Expected_Outcome_Value',l:'Expected (R)',t:'num'},{k:'Actual_Outcome_Value',l:'Actual (R)',t:'num'},{k:'Budgeted_Net_Value',l:'Budget (R)',t:'num'},{k:'Actual_Spend',l:'Spend (R)',t:'num'}]:role==='Transactional'?[{k:'Lead_Attorney',l:'Lead',t:'yesno'},{k:'Completed_Without_Rework',l:'No Rework',t:'yesno'},{k:'Deal_Value',l:'Deal (R)',t:'num'},{k:'Normalised_Deal_Value',l:'Norm. (R)',t:'ro'}]:[{k:'Business_Objective',l:'Objective',t:'text'},{k:'Business_Objective_Met',l:'Met',t:'ynp'},{k:'Resolved_Inhouse',l:'In-house',t:'yesno'}];
+  const cols=[...common,...extra];
+  const missCnt=matters.filter(m=>missBM(m,role).length>0).length;
+  card.append(h('div',{style:{display:'flex',alignItems:'center',marginBottom:'10px'}},
+    h('h2',{style:{margin:0,fontSize:'16px',color:'#1B4D3E',flex:1}},'📋 '+role+' — Matter Entry'),
+    h('button',{className:'btn',onClick:()=>{S.mm[role].push(newMatter(role));R()}},'+Add Matter')));
+  if(missCnt)card.append(h('div',{className:'msg msg-err',style:{marginBottom:'10px'}},`⚠ ${missCnt} matter${missCnt!==1?'s':''} ${missCnt!==1?'have':'has'} no matching benchmark. Hover ⚠ for details.`));
+  const tbl=h('table',null);
+  tbl.append(h('thead',null,h('tr',{className:'tbl-hdr'},...cols.map(c=>h('th',null,c.l)),h('th',null,''))));
+  const tbody=h('tbody',null);
+  if(!matters.length)tbody.append(h('tr',null,h('td',{colSpan:cols.length+1,style:{textAlign:'center',color:'#888',padding:'20px'}},'No matters. Click "+Add Matter" to begin.')));
+  matters.forEach((m,i)=>{
+    const warns=missBM(m,role);
+    const tr=h('tr',{style:{background:warns.length?'#fff8e1':i%2?'#f8f9fb':'#fff'}});
+    for(const c of cols){
+      const td=h('td',null);
+      if(c.c&&(!m[c.c]||m[c.c]<=0)){td.append(h('span',{style:{color:'#bbb'}},'—'));tr.append(td);continue}
+      const v=m[c.k];
+      if(c.t==='text'){td.append(h('input',{className:'inp',value:v??'',onInput:ev=>{m[c.k]=ev.target.value;save()}}))}
+      else if(c.t==='date'){td.append(h('input',{className:'inp',type:'date',value:v??'',style:{width:'130px'},onChange:ev=>{m[c.k]=ev.target.value;m.Duration_Days=calcDur(m.Open_Date,m.Close_Date);R()}}))}
+      else if(c.t==='num'){td.append(h('input',{className:'inp-num',type:'number',min:'0',step:'0.01',value:v||'',onInput:ev=>{m[c.k]=parseFloat(ev.target.value)||0;if(role==='Transactional'&&c.k==='Deal_Value')m.Normalised_Deal_Value=calcNDV(m.Deal_Value,m.Complexity_Band,m.Jurisdiction);save()}}))}
+      else if(c.t==='int'){td.append(h('input',{className:'inp-num inp-sm',type:'number',min:'0',step:'1',value:v??0,onChange:ev=>{m[c.k]=parseInt(ev.target.value)||0;R()}}))}
+      else if(c.t==='ro'){td.append(h('span',{style:{fontWeight:600,color:'#2c3e50'}},String(v??'')))}
+      else if(c.t==='select'){const sel=h('select',{className:'sel',onChange:ev=>{m[c.k]=ev.target.value;if(role==='Transactional'&&(c.k==='Complexity_Band'||c.k==='Jurisdiction'))m.Normalised_Deal_Value=calcNDV(m.Deal_Value,m.Complexity_Band,m.Jurisdiction);R()}});sel.append(h('option',{value:''},'— Select —'));(c.o||[]).forEach(o=>sel.append(h('option',{value:o},o)));sel.value=v??'';td.append(sel)}
+      else if(c.t==='yesno'){const sel=h('select',{className:'sel',onChange:ev=>{m[c.k]=ev.target.value;save()}});YES_NO.forEach(o=>sel.append(h('option',{value:o},o)));sel.value=v??'No';td.append(sel)}
+      else if(c.t==='ynp'){const sel=h('select',{className:'sel',onChange:ev=>{m[c.k]=ev.target.value;save()}});YES_NO_PARTIAL.forEach(o=>sel.append(h('option',{value:o},o)));sel.value=v??'No';td.append(sel)}
+      tr.append(td);
+    }
+    const actTd=h('td',{style:{whiteSpace:'nowrap'}});
+    if(warns.length)actTd.append(h('span',{className:'warn',title:warns.join('\n'),style:{marginRight:'4px',fontSize:'13px'}},'⚠'));
+    actTd.append(h('button',{className:'del-btn',onClick:()=>{S.mm[role].splice(i,1);R()},title:'Delete'},'✕'));
+    tr.append(actTd);tbody.append(tr);
+  });
+  tbl.append(tbody);card.append(h('div',{className:'overflow-x'},tbl));return card;
+}
+
+// ── Benchmarks Panel ────────────────────────────────────────────
+function renderBenchPanel(){
+  const role=S.role,nv=totalNV(role),matters=S.mm[role];
+  const wrap=h('div',{style:{marginTop:'16px'}});
+  const arrow=h('span',{style:{display:'inline-block',transition:'transform .2s',transform:S.benchOpen?'rotate(90deg)':'rotate(0)'}},'▶');
+  const badges=[];
+  if(nv>0)badges.push(h('span',{className:'badge badge-amber',style:{marginLeft:'6px'}},`${nv} need${nv===1?'s':''} value`));
+  else if(matters.length)badges.push(h('span',{className:'badge badge-green',style:{marginLeft:'6px'}},'✓ Complete'));
+  wrap.append(h('button',{className:'collapse-btn'+(S.benchOpen?' open':''),onClick:()=>{S.benchOpen=!S.benchOpen;R()}},arrow,' ⚙️ Benchmarks',...badges,h('span',{style:{fontSize:'11px',fontWeight:400,color:'#888',marginLeft:'4px',flex:1}},`— Peer benchmarks for ${role}`)));
+  if(S.benchOpen){
+    const body=h('div',{className:'collapse-body'});
+    BT.filter(t=>t.roles.includes(role)).forEach(t=>{
+      const entries=S.bm[t.key],nvT=entries.filter(e=>e.Value==null).length;
+      const sec=h('div',{className:'section'});
+      const fi=h('input',{type:'file',accept:'.csv',style:{display:'none'},onChange:ev=>{const f=ev.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=e=>{const{added,upserted}=importBenchCSV(e.target.result,t);const parts=[];if(upserted)parts.push(`${upserted} updated`);if(added)parts.push(`${added} added`);alert(parts.length?`Benchmark import: ${parts.join(', ')}.`:'No changes.');R()};reader.readAsText(f);ev.target.value=''}});
+      sec.append(h('div',{className:'section-hdr'},
+        h('div',null,t.label,h('span',{style:{fontSize:'10px',opacity:.75,fontWeight:400,marginLeft:'6px'}},`${t.desc} · "All"=fallback`)),
+        h('div',{style:{display:'flex',gap:'5px',alignItems:'center'}},
+          nvT?h('span',{className:'badge badge-amber'},`${nvT} need${nvT===1?'s':''} value`):null,
+          fi,
+          h('button',{className:'btn btn-sm btn-grey',onClick:()=>fi.click(),title:'Import CSV'},'⬆ Import'),
+          h('button',{className:'btn btn-sm btn-grey',onClick:()=>exportBenchCSV(t),disabled:!entries.length,title:'Export CSV'},'⬇ Export'),
+          h('button',{className:'btn btn-sm btn-blue',onClick:()=>{genMissing(t);R()}},'⚡ Generate'),
+          h('button',{className:'btn btn-sm',onClick:()=>{S.bm[t.key].push({id:mkId(),Practice_Area:'',Complexity_Band:'',Jurisdiction:'',Value:null});R()}},'+Add'))));
+      const tbl=h('table',null);
+      const ths=[];if(t.sP)ths.push('Practice Area');if(t.sC)ths.push('Complexity Band');if(t.sJ)ths.push('Jurisdiction');ths.push(`Value (${t.unit})`);ths.push('');
+      tbl.append(h('thead',null,h('tr',{className:'tbl-bench'},...ths.map(x=>h('th',null,x)))));
+      const tbody=h('tbody',null);
+      if(!entries.length)tbody.append(h('tr',null,h('td',{colSpan:ths.length,style:{textAlign:'center',color:'#aaa',padding:'12px'}},'No entries. Click ⚡ Generate.')));
+      const paOpts=[ALL,...S.sl.practiceAreas],cbOpts=[ALL,...S.sl.complexityBands],jurOpts=[ALL,...S.sl.jurisdictions];
+      entries.forEach((e,i)=>{
+        const mv=e.Value==null;
+        const tr=h('tr',{style:{background:mv?'#fff8e1':i%2?'#fafafa':'#fff'}});
+        if(t.sP){const sel=h('select',{className:'sel',onChange:ev=>{e.Practice_Area=ev.target.value;R()}});sel.append(h('option',{value:''},'— Select —'));paOpts.forEach(p=>{const o=h('option',{value:p},p);if(p===ALL)o.style.fontWeight='700';sel.append(o)});sel.value=e.Practice_Area;tr.append(h('td',null,sel))}
+        if(t.sC){const sel=h('select',{className:'sel',onChange:ev=>{e.Complexity_Band=ev.target.value;R()}});sel.append(h('option',{value:''},'— Select —'));cbOpts.forEach(b=>{const o=h('option',{value:b},b);if(b===ALL)o.style.fontWeight='700';sel.append(o)});sel.value=e.Complexity_Band;tr.append(h('td',null,sel))}
+        if(t.sJ){const sel=h('select',{className:'sel',onChange:ev=>{e.Jurisdiction=ev.target.value;R()}});sel.append(h('option',{value:''},'— Select —'));jurOpts.forEach(j=>{const o=h('option',{value:j},j);if(j===ALL)o.style.fontWeight='700';sel.append(o)});sel.value=e.Jurisdiction;tr.append(h('td',null,sel))}
+        const vTd=h('td',null);
+        const inp=h('input',{className:'inp-num',type:'number',min:'0',step:'0.01',value:e.Value??'',style:{borderColor:mv?'#e65100':'#cdd3dc'},onInput:ev=>{e.Value=ev.target.value?parseFloat(ev.target.value):null;save()}});
+        vTd.append(h('span',{style:{display:'inline-flex',alignItems:'center'}},inp,h('span',{style:{fontSize:'10px',color:'#888',marginLeft:'3px'}},t.unit)));
+        if(t.unit==='days'&&e.Value!=null&&e.Value>0&&e.Value<1)vTd.append(h('span',{style:{color:'#e65100',fontSize:'10px',marginLeft:'2px'},title:`${e.Value} below 1 day`},'⚠ <1'));
+        tr.append(vTd);
+        const aTd=h('td',{style:{whiteSpace:'nowrap'}});
+        if(mv)aTd.append(h('span',{className:'warn',style:{fontSize:'12px',marginRight:'2px'},title:'Value required'},'⚠'));
+        aTd.append(h('button',{className:'del-btn',onClick:()=>{S.bm[t.key].splice(i,1);R()}},'✕'));
+        tr.append(aTd);tbody.append(tr);
+      });
+      tbl.append(tbody);sec.append(tbl);body.append(sec);
+    });
+    wrap.append(body);
+  }
+  return wrap;
+}
+
+// ── Scorecard ───────────────────────────────────────────────────
+function renderScorecard(){
+  const matters=S.mm[S.role],scores=computeScorecard(matters,S.role);
+  const card=h('div',{className:'card'});
+  card.append(h('div',{style:{display:'flex',alignItems:'center',marginBottom:'12px'}},
+    h('h2',{style:{margin:0,fontSize:'16px',color:'#1B4D3E',flex:1}},'📊 '+S.role+' Attorney Scorecard'),
+    h('button',{className:'btn btn-sm',onClick:()=>exportScorecard(scores),disabled:!scores.length},'⬇ Export')));
+  if(!scores.length){card.append(h('div',{style:{textAlign:'center',color:'#888',padding:'32px'}},'Enter closed matters with attorney names to see the scorecard.'));return card}
+  const s0=scores[0];
+  card.append(h('div',{style:{marginBottom:'8px',fontSize:'12px',color:'#555'}},h('strong',null,'Review Period: '),s0.Review_Period,' | ',h('strong',null,'Peer Group: '),s0.Peer_Group,' | ',h('strong',null,'Last: '),new Date(s0.Last_Calculated).toLocaleString()));
+  const tbl=h('table',null);
+  const ths=['Attorney','#',s0.KPI1_Label,s0.KPI2_Label,s0.KPI3_Label,s0.KPI4_Label,'a','b','c','d','APR','Band','%ile','Thr.','DQ'];
+  tbl.append(h('thead',null,h('tr',{className:'tbl-hdr'},...ths.map(t=>h('th',{style:{textAlign:'center'}},t)))));
+  const tbody=h('tbody',null);
+  const fmt=(v,d=3)=>v.toFixed(d);
+  scores.forEach((s,i)=>{
+    const tr=h('tr',{style:{background:i%2?'#f8faf9':'#fff'}});
+    const nc=h('td',{style:{fontWeight:600,color:'#1B4D3E',textAlign:'left',padding:'5px'}},s.Attorney_Name);
+    if(s.Benchmark_Warnings.length)nc.append(h('span',{className:'warn',title:s.Benchmark_Warnings.join('\n'),style:{marginLeft:'4px'}},'⚠'));
+    tr.append(nc);
+    const tc=v=>h('td',{style:{textAlign:'center',padding:'5px'}},String(v));
+    tr.append(tc(s.Matter_Count),tc(fmt(s.KPI1)),tc(fmt(s.KPI2)),tc(fmt(s.KPI3)),tc(fmt(s.KPI4)),tc(fmt(s.a)),tc(fmt(s.b)),tc(fmt(s.c)),tc(fmt(s.d)));
+    tr.append(h('td',{style:{textAlign:'center',fontWeight:700,fontSize:'12px',padding:'5px'}},fmt(s.APR,1)));
+    tr.append(h('td',{style:{textAlign:'center',padding:'5px'}},h('span',{className:'band',style:{background:BAND_COL[s.Band]||'#7f8c8d'}},s.Band)));
+    tr.append(tc(s.Percentile!=null?fmt(s.Percentile):'—'),tc(s.Meets_Threshold==='Yes'?'✅':'❌'));
+    tr.append(h('td',{style:{fontSize:'10px',color:s.Data_Quality_Flag?'#e65100':'#27ae60',textAlign:'left',padding:'5px'}},s.Data_Quality_Flag||'✓ OK'));
+    tbody.append(tr);
+  });
+  tbl.append(tbody);card.append(h('div',{className:'overflow-x'},tbl));return card;
+}
+
+// ── Settings ────────────────────────────────────────────────────
+function renderSettings(){
+  const sl=S.sl,card=h('div',{className:'card'});
+  card.append(h('h2',{style:{fontSize:'16px',color:'#1B4D3E',marginBottom:'12px'}},'⚙️ Settings'));
+  card.append(h('p',{style:{fontSize:'12px',color:'#555',marginBottom:'16px'}},'Manage shared lists for dropdowns across Matter Entry and Benchmark tables. Changes apply to all roles.'));
+  const secs=[{key:'practiceAreas',label:'Practice Areas',ph:'e.g. Environmental Law'},{key:'complexityBands',label:'Complexity Bands',ph:'e.g. Very High'},{key:'jurisdictions',label:'Jurisdictions',ph:'e.g. Gauteng'}];
+  const grid=h('div',{style:{display:'flex',gap:'16px',flexWrap:'wrap'}});
+  secs.forEach(sec=>{
+    const c=h('div',{style:{flex:'1 1 220px',minWidth:'200px',border:'1px solid #e2e6ec',borderRadius:'8px',overflow:'hidden'}});
+    c.append(h('div',{style:{background:'#1B4D3E',color:'#fff',padding:'7px 12px',fontSize:'12px',fontWeight:700,display:'flex',justifyContent:'space-between'}},h('span',null,sec.label),h('span',{style:{fontSize:'10px',opacity:.8}},sl[sec.key].length)));
+    const body=h('div',{style:{padding:'8px',maxHeight:'220px',overflowY:'auto'}});
+    if(!sl[sec.key].length)body.append(h('span',{style:{color:'#aaa',fontSize:'11px'}},'No items'));
+    sl[sec.key].forEach((v,i)=>body.append(h('span',{className:'tag'},v,h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'#c0392b',fontWeight:700,fontSize:'12px',padding:0},onClick:()=>{sl[sec.key].splice(i,1);R()}},'✕'))));
+    c.append(body);
+    const row=h('div',{style:{display:'flex',gap:'4px',padding:'6px 8px',borderTop:'1px solid #eee'}});
+    const inp=h('input',{style:{flex:1,padding:'4px 6px',border:'1px solid #cdd3dc',borderRadius:'4px',fontSize:'11px'},placeholder:sec.ph});
+    const add=()=>{const v=inp.value.trim();if(!v||sl[sec.key].some(x=>x.toLowerCase()===v.toLowerCase()))return;sl[sec.key].push(v);R()};
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();add()}});
+    row.append(inp,h('button',{className:'btn btn-sm',onClick:add},'+Add'));
+    c.append(row);grid.append(c);
+  });
+  card.append(grid);return card;
+}
+
+// ── Boot ────────────────────────────────────────────────────────
+load();R();
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function() {
+    navigator.serviceWorker.register("sw.js").catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
